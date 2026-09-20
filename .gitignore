@@ -20,3 +20,4 @@ harmonized_data/
 data/experiments/benchmark_grid/runs/
 data/experiments/benchmark_grid/reports/
 experiments/**/__pycache__/
+data/FI_2010/*.zip
