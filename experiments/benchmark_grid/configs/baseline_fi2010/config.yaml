@@ -1,0 +1,17 @@
+name: baseline_fi2010
+label: TLOB (ERM - Baseline 1)
+method: erm
+training_data: [FI_2010]
+source_domain: FI_2010
+target_domains: [FI_2010, ETH, BTC]
+expected_results: [high, low, low]
+status: runnable
+model: TLOB
+architecture_contract: models/tlob.py
+seed: 42
+horizon: 10
+max_epochs: 10
+batch_size: 32
+use_all_features: true
+deepcoral: false
+gpu_required: true

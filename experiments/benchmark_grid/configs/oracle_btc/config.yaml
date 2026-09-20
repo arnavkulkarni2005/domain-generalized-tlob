@@ -1,0 +1,17 @@
+name: oracle_btc
+label: TLOB Oracle (Upper Bound)
+method: erm
+training_data: [BTC]
+source_domain: BTC
+target_domains: [BTC]
+expected_results: [theoretical_maximum]
+status: blocked_pending_btc_tlob_training_backend
+model: TLOB
+architecture_contract: models/tlob.py
+seed: 42
+horizon: 10
+max_epochs: 10
+batch_size: 128
+use_all_features: true
+deepcoral: false
+gpu_required: true

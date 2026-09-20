@@ -1,0 +1,17 @@
+name: baseline_eth
+label: TLOB (ERM - Baseline 2)
+method: erm
+training_data: [ETH]
+source_domain: ETH
+target_domains: [FI_2010, ETH, BTC]
+expected_results: [low, high, moderate]
+status: blocked_pending_eth_training_backend
+model: TLOB
+architecture_contract: models/tlob.py
+seed: 42
+horizon: 10
+max_epochs: 10
+batch_size: 32
+use_all_features: false
+deepcoral: false
+gpu_required: true

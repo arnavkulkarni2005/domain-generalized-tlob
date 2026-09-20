@@ -15,3 +15,8 @@ venv/
 data/eth/
 eth_features_normalized.npy
 eth_labels.npy
+*.npy
+harmonized_data/
+data/experiments/benchmark_grid/runs/
+data/experiments/benchmark_grid/reports/
+experiments/**/__pycache__/

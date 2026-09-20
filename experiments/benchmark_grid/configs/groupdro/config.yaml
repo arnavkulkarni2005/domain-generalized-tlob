@@ -1,0 +1,17 @@
+name: groupdro
+label: TLOB + GroupDRO (Proposed)
+method: groupdro
+training_data: [FI_2010, ETH]
+source_domain: FI_2010+ETH
+target_domains: [FI_2010, ETH, BTC]
+expected_results: [high, high, target_result_robust]
+status: blocked_pending_group_aware_training_backend
+model: TLOB
+architecture_contract: models/tlob.py
+seed: 42
+horizon: 10
+max_epochs: 10
+batch_size: 32
+use_all_features: false
+deepcoral: false
+gpu_required: true

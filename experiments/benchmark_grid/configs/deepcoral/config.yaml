@@ -1,0 +1,19 @@
+name: deepcoral
+label: TLOB + DeepCORAL (Proposed)
+method: deepcoral
+training_data: [FI_2010, ETH]
+source_domain: FI_2010
+target_domains: [FI_2010, ETH, BTC]
+expected_results: [high, high, target_result]
+status: runnable_fi2010_source_only
+model: TLOB
+architecture_contract: models/tlob.py
+seed: 42
+horizon: 10
+max_epochs: 10
+batch_size: 32
+use_all_features: false
+deepcoral: true
+coral_weight: 1.0
+target_data_path: harmonized_data/eth_features_normalized.npy
+gpu_required: true

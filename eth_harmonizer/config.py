@@ -1,9 +1,9 @@
 # config.py
 
 # Data Paths
-RAW_ETH_PATH = "C:/tloboriginal/TLOB/data/eth/ETH_1sec.csv"
-OUTPUT_FEATURES_PATH = "eth_features_normalized.npy"
-OUTPUT_LABELS_PATH = "eth_labels.npy"
+RAW_ETH_PATH = "C:/tloboriginal/TLOB/data/eth/BTC_1sec.csv"
+OUTPUT_FEATURES_PATH = "btc_features_normalized.npy"
+OUTPUT_LABELS_PATH = "btc_labels.npy"
 
 # LOB Architecture Parameters
 NUM_LEVELS = 10        # Truncate to 10 levels to match FI-2010 (40 columns total)
