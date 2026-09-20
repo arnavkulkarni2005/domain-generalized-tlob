@@ -34,6 +34,8 @@ class Engine(LightningModule):
         num_heads=8,
         is_sin_emb=True,
         len_test_dataloader=None,
+        deepcoral=False,
+        coral_weight=1.0,
     ):
         super().__init__()
         self.seq_size = seq_size
@@ -44,6 +46,8 @@ class Engine(LightningModule):
         self.num_heads = num_heads
         self.is_wandb = is_wandb
         self.len_test_dataloader = len_test_dataloader
+        self.deepcoral = deepcoral
+        self.coral_weight = coral_weight
         self.lr = lr
         self.optimizer = optimizer
         self.dir_ckpt = dir_ckpt
@@ -76,12 +80,30 @@ class Engine(LightningModule):
     
     def loss(self, y_hat, y):
         return self.loss_function(y_hat, y)
+
+    @staticmethod
+    def coral_loss(source_features, target_features):
+        source_centered = source_features - source_features.mean(dim=0, keepdim=True)
+        target_centered = target_features - target_features.mean(dim=0, keepdim=True)
+        source_covariance = source_centered.T @ source_centered / max(source_features.shape[0] - 1, 1)
+        target_covariance = target_centered.T @ target_centered / max(target_features.shape[0] - 1, 1)
+        feature_count = source_features.shape[1]
+        return (source_covariance - target_covariance).pow(2).sum() / (4 * feature_count * feature_count)
         
     def training_step(self, batch, batch_idx):
-        x, y = batch
+        if self.deepcoral:
+            (x, y), target_x = batch
+            source_features = self.model.forward_features(x)
+            target_features = self.model.forward_features(target_x)
+            coral_loss = self.coral_loss(source_features, target_features)
+        else:
+            x, y = batch
+            coral_loss = torch.zeros((), device=x.device)
         y_hat = self.forward(x)
         batch_loss = self.loss(y_hat, y)
-        batch_loss_mean = torch.mean(batch_loss)
+        batch_loss_mean = torch.mean(batch_loss) + self.coral_weight * coral_loss
+        if self.deepcoral:
+            self.log("coral_loss", coral_loss, on_step=True, on_epoch=True)
         self.train_losses.append(batch_loss_mean.item())
         self.ema.update()
         if batch_idx % 1000 == 0:

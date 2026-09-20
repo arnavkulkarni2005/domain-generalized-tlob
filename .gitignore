@@ -11,3 +11,7 @@ data/BTC
 env
 preprocessing/digital*
 data/checkpoints/TLOB/v*
+venv/
+data/eth/
+eth_features_normalized.npy
+eth_labels.npy

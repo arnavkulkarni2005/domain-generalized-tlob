@@ -3,6 +3,7 @@ import omegaconf
 import torch
 import glob
 import os
+import numpy as np
 from lightning.pytorch.loggers import WandbLogger
 import wandb
 from torch.utils.data import DataLoader
@@ -13,7 +14,7 @@ from models.engine import Engine
 from preprocessing.fi_2010 import fi_2010_load
 from preprocessing.lobster import lobster_load
 from preprocessing.btc import btc_load
-from preprocessing.dataset import Dataset, DataModule
+from preprocessing.dataset import Dataset, DataModule, DomainAdaptationDataset
 import constants as cst
 from constants import DatasetType, SamplingType
 torch.serialization.add_safe_globals([omegaconf.listconfig.ListConfig])
@@ -56,7 +57,10 @@ def train(config: Config, trainer: L.Trainer, run=None):
     dataset_type = config.dataset.type.value
     if dataset_type == "FI_2010":
         path = cst.DATA_DIR + "/FI_2010"
-        train_input, train_labels, val_input, val_labels, test_input, test_labels = fi_2010_load(path, seq_size, horizon, config.model.hyperparameters_fixed["all_features"])
+        use_all_features = config.model.hyperparameters_fixed["all_features"]
+        if config.experiment.deepcoral:
+            use_all_features = False
+        train_input, train_labels, val_input, val_labels, test_input, test_labels = fi_2010_load(path, seq_size, horizon, use_all_features)
         train_set = Dataset(train_input, train_labels, seq_size)
         val_set = Dataset(val_input, val_labels, seq_size)
         test_set = Dataset(test_input, test_labels, seq_size)
@@ -65,14 +69,26 @@ def train(config: Config, trainer: L.Trainer, run=None):
             val_set.length = 1000
             test_set.length = 10000
         data_module = DataModule(
-            train_set=Dataset(train_input, train_labels, seq_size),
-            val_set=Dataset(val_input, val_labels, seq_size),
-            test_set=Dataset(test_input, test_labels, seq_size),
+            train_set=train_set,
+            val_set=val_set,
+            test_set=test_set,
             batch_size=config.dataset.batch_size,
             test_batch_size=config.dataset.batch_size*4,
             num_workers=4
         )
         test_loaders = [data_module.test_dataloader()]
+        if config.experiment.deepcoral:
+            if config.model.type.value != "TLOB":
+                raise ValueError("DeepCORAL is currently supported only for TLOB")
+            target_input = torch.from_numpy(np.load(config.experiment.target_data_path)).float()
+            if target_input.ndim != 2:
+                raise ValueError("ETH features must have shape [time, features]")
+            target_set = Dataset(
+                target_input,
+                torch.zeros(target_input.shape[0], dtype=torch.long),
+                seq_size,
+            )
+            data_module.train_set = DomainAdaptationDataset(train_set, target_set)
     
     elif dataset_type == "BTC":
         train_input, train_labels = btc_load(cst.DATA_DIR + "/BTC/train.npy", cst.LEN_SMOOTH, horizon, seq_size)
@@ -218,7 +234,9 @@ def train(config: Config, trainer: L.Trainer, run=None):
                 num_heads=checkpoint["hyper_parameters"]["num_heads"],
                 is_sin_emb=checkpoint["hyper_parameters"]["is_sin_emb"],
                 map_location=cst.DEVICE,
-                len_test_dataloader=len(test_loaders[0])
+                len_test_dataloader=len(test_loaders[0]),
+                deepcoral=config.experiment.deepcoral,
+                coral_weight=config.experiment.coral_weight
                 )
         elif model_type == "BINCTABL":
             model = Engine.load_from_checkpoint(
@@ -290,7 +308,9 @@ def train(config: Config, trainer: L.Trainer, run=None):
                 dataset_type=dataset_type,
                 num_heads=config.model.hyperparameters_fixed["num_heads"],
                 is_sin_emb=config.model.hyperparameters_fixed["is_sin_emb"],
-                len_test_dataloader=len(test_loaders[0])
+                len_test_dataloader=len(test_loaders[0]),
+                deepcoral=config.experiment.deepcoral,
+                coral_weight=config.experiment.coral_weight
             )
         elif model_type == cst.ModelType.BINCTABL:
             model = Engine(

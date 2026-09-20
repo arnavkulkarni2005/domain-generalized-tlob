@@ -74,6 +74,9 @@ class Experiment:
     is_data_preprocessed: bool = False
     is_wandb: bool = True
     is_sweep: bool = False
+    deepcoral: bool = False
+    coral_weight: float = 1.0
+    target_data_path: str = "eth_features_normalized.npy"
     type: list = field(default_factory=lambda: ["TRAINING"])
     is_debug: bool = False
     checkpoint_reference: str = ""

@@ -68,6 +68,20 @@ python main.py +model={your_model_name} +dataset={dataset_name} hydra.job.chdir=
 7. A checkpoint will be saved in data/checkpoints/ 
 Optionally, you can also log the run with wandb or run a sweep, changing the config experiment options.
 
+## FI-2010 to ETH DeepCORAL adaptation
+
+DeepCORAL training is available for TLOB with FI-2010 as the labeled source domain and
+the repository-level `eth_features_normalized.npy` as the unlabeled target domain. The
+adaptation mode uses FI-2010's 40 LOB features so they match the ETH array shape.
+
+```sh
+python main.py +model=tlob +dataset=fi_2010 experiment.deepcoral=true experiment.is_wandb=false hydra.job.chdir=False
+```
+
+Override `experiment.coral_weight` to change the CORAL penalty, or
+`experiment.target_data_path` to point to another target feature array. Target labels
+are not used by the unsupervised CORAL loss.
+
 # Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=LeonardoBerti00/TLOB&type=date&legend=top-left)](https://www.star-history.com/#LeonardoBerti00/TLOB&type=date&legend=top-left)

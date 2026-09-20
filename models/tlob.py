@@ -97,7 +97,7 @@ class TLOB(nn.Module):
         self.final_layers.append(nn.Linear(total_dim, 3))
         
     
-    def forward(self, input, store_att=False):
+    def _encode(self, input):
         if self.dataset_type == "LOBSTER":
             continuous_features = torch.cat([input[:, :, :41], input[:, :, 42:]], dim=2)
             order_type = input[:, :, 41].long()
@@ -116,8 +116,17 @@ class TLOB(nn.Module):
             x = x.permute(0, 2, 1)
         x = rearrange(x, 'b s f -> b (f s) 1')              
         x = x.reshape(x.shape[0], -1)
-        for layer in self.final_layers:
+        return x
+
+    def forward_features(self, input):
+        x = self._encode(input)
+        for layer in self.final_layers[:-1]:
             x = layer(x)
+        return x
+
+    def forward(self, input, store_att=False):
+        x = self.forward_features(input)
+        x = self.final_layers[-1](x)
         return x
     
     

@@ -29,6 +29,27 @@ class Dataset(data.Dataset):
     def __getitem__(self, i):
         input = self.x[i:i+self.seq_size, :]
         return input, self.y[i]
+
+
+class DomainAdaptationDataset(data.Dataset):
+    """Pairs labeled source windows with unlabeled target windows."""
+    def __init__(self, source_set, target_set):
+        if source_set.x.shape[1] != target_set.x.shape[1]:
+            raise ValueError(
+                "Source and target feature counts must match for DeepCORAL: "
+                f"{source_set.x.shape[1]} != {target_set.x.shape[1]}"
+            )
+        self.source_set = source_set
+        self.target_set = target_set
+        self.data = source_set.data
+
+    def __len__(self):
+        return len(self.source_set)
+
+    def __getitem__(self, i):
+        source_x, source_y = self.source_set[i]
+        target_x, _ = self.target_set[i % len(self.target_set)]
+        return (source_x, source_y), target_x
     
 
 class DataModule(pl.LightningDataModule):
